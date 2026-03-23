@@ -1,41 +1,48 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# Environment Variables (CRITICAL: Do not push these!)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# testing
-/coverage
+# Next.js Build
+.next/
+out/
 
-# next.js
-/.next/
-/out/
+# Production
+build/
+dist/
 
-# production
-/build
+# Fabric / Blockchain (CRITICAL: Private keys and certificates)
+_wallets/
+_gateways/
+_msp/
+bin/
+builders/
+config/
+fabric_api/wallet/
+fabric_api/logs/
+_microfab/
+*.id
 
-# misc
-.DS_Store
-*.pem
-
-# debug
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
+logs/
+*.log
 
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
+# Misc
+.DS_Store
 .vercel
+*.pem
+*.key
+*.cert
+*.crt
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+!app_backend/src/config

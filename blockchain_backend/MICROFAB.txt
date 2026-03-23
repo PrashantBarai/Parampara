@@ -1,0 +1,82 @@
+{
+  "port": 9090,
+  "endorsing_organizations": [
+    {
+      "name": "NGOOrg",
+      "peers": [
+        {
+          "name": "peer0",
+          "stateDatabase": "couchdb"
+        }
+      ]
+    },
+    {
+      "name": "ValidatorOrg",
+      "peers": [
+        {
+          "name": "peer0",
+          "stateDatabase": "couchdb"
+        }
+      ]
+    },
+    {
+      "name": "ManufacturerOrg",
+      "peers": [
+        {
+          "name": "peer0",
+          "stateDatabase": "couchdb"
+        }
+      ]
+    },
+    {
+      "name": "WarehouseOrg",
+      "peers": [
+        {
+          "name": "peer0",
+          "stateDatabase": "couchdb"
+        }
+      ]
+    },
+    {
+      "name": "DistributorOrg",
+      "peers": [
+        {
+          "name": "peer0",
+          "stateDatabase": "couchdb"
+        }
+      ]
+    },
+    {
+      "name": "RetailerOrg",
+      "peers": [
+        {
+          "name": "peer0",
+          "stateDatabase": "couchdb"
+        }
+      ]
+    },
+    {
+      "name": "CustomerOrg",
+      "peers": [
+        {
+          "name": "peer0",
+          "stateDatabase": "couchdb"
+        }
+      ]
+    }
+  ],
+  "channels": [
+    {
+      "name": "supplychain-channel",
+      "endorsing_organizations": [
+        "NGOOrg",
+        "ValidatorOrg",
+        "ManufacturerOrg",
+        "WarehouseOrg",
+        "DistributorOrg",
+        "RetailerOrg",
+        "CustomerOrg"
+      ]
+    }
+  ]
+}

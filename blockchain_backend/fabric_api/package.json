@@ -1,0 +1,22 @@
+{
+  "name": "parampara-fabric-gateway",
+  "version": "1.0.0",
+  "description": "Fabric Gateway REST API for ParamparaChain — On-Chain service (Port 4000)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "sync": "node sync.js",
+    "enroll": "node enrollment.js --enrollAll"
+  },
+  "dependencies": {
+    "axios": "^1.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.0",
+    "express": "^4.18.2",
+    "fabric-ca-client": "^2.2.20",
+    "fabric-network": "^2.2.20",
+    "jsonwebtoken": "^9.0.2",
+    "winston": "^3.19.0"
+  }
+}
