@@ -1,6 +1,6 @@
 const express = require('express');
 const feedbackController = require('../controllers/feedback.controller');
-const auth = require('../middlewares/auth.middleware');
+const { protect } = require('../middlewares/auth.middleware');
 
 const router = express.Router();
 
@@ -10,6 +10,6 @@ router.get('/:productId', feedbackController.getProductFeedback);
 router.get('/:productId/summary', feedbackController.getFeedbackSummary);
 
 // Admin routes
-router.delete('/:feedbackId', auth, feedbackController.deleteFeedback);
+router.delete('/:feedbackId', protect, feedbackController.deleteFeedback);
 
 module.exports = router;
