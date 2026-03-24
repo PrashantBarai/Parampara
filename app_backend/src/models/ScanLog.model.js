@@ -11,6 +11,7 @@ const ScanLogSchema = new mongoose.Schema({
   isFraud: { type: Boolean, default: false },
   fraudReason: { type: String },
   ownerMismatch: { type: Boolean, default: false },
+  qrSignatureValid: { type: Boolean, default: null },
 });
 
 ScanLogSchema.index({ productId: 1, timestamp: -1 });

@@ -2,31 +2,62 @@
 
 import { useState } from "react";
 import { Navbar } from "@/components/navbar";
+import { QRScanner } from "@/components/QRScanner";
+import { OfflineIndicator, useOfflineSync } from "@/components/OfflineSync";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { scanAPI } from "@/lib/api";
-import { ScanResult, STATUS_COLORS } from "@/lib/types";
-import { QrCode, Search, AlertTriangle, MapPin, Package, Loader2, Shield, Clock } from "lucide-react";
+import { scanAPI, lifecycleAPI, transferAPI } from "@/lib/api";
+import { ScanResult, STATUS_COLORS, ORG_MAP } from "@/lib/types";
+import {
+  QrCode, Search, AlertTriangle, MapPin, Package, Loader2,
+  Shield, Clock, Camera, ArrowRightLeft, Plus, Layers
+} from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 
+const SUPPLY_CHAIN_ROLES = ["warehouse", "distributor", "retailer"];
+const NEXT_ORG_MAP: Record<string, string> = {
+  warehouse: "DistributorOrg",
+  distributor: "RetailerOrg",
+  retailer: "CustomerOrg",
+};
+const STAGE_MAP: Record<string, string> = {
+  warehouse: "WAREHOUSED",
+  distributor: "DISTRIBUTED",
+  retailer: "IN_RETAIL",
+};
+
 export default function ScanPage() {
   const { user } = useAuth();
+  const { isOnline, saveScanForLater } = useOfflineSync();
   const [productId, setProductId] = useState("");
   const [location, setLocation] = useState("");
   const [result, setResult] = useState<ScanResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+  const [scanMode, setScanMode] = useState<"qr" | "manual">("qr");
 
-  const handleScan = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!productId.trim()) { toast.error("Enter a product ID"); return; }
+  // Lifecycle action state
+  const [actionLoading, setActionLoading] = useState(false);
+  const [marginValue, setMarginValue] = useState("");
+  const [stageLocation, setStageLocation] = useState("");
+
+  const performScan = async (id: string, sig: string = "") => {
+    if (!id.trim()) { toast.error("Enter a product ID"); return; }
     setLoading(true);
     try {
-      const res = await scanAPI.scan({ productId: productId.trim(), location });
+      if (!isOnline) {
+        await saveScanForLater(id, sig, location);
+        toast.info("Offline — scan saved and will sync when online");
+        setLoading(false);
+        return;
+      }
+      const res = await scanAPI.scan({ productId: id.trim(), location, ...(sig ? { sig } : {}) });
       setResult(res.data.data);
+      setProductId(id.trim());
       toast.success("Product scanned!");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Scan failed");
@@ -34,6 +65,55 @@ export default function ScanPage() {
     }
     setLoading(false);
   };
+
+  const handleManualScan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await performScan(productId);
+  };
+
+  const handleQRScan = async (scannedId: string, sig: string) => {
+    setShowScanner(false);
+    setProductId(scannedId);
+    await performScan(scannedId, sig);
+  };
+
+  const handleAddLifecycle = async () => {
+    if (!user || !result) return;
+    setActionLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("productId", result.product.productId);
+      formData.append("stage", STAGE_MAP[user.role] || user.role.toUpperCase());
+      formData.append("marginValue", marginValue || "0");
+      if (stageLocation) formData.append("location", stageLocation);
+      await lifecycleAPI.addStage(formData);
+      toast.success("Lifecycle stage added!");
+
+      // Re-scan to refresh data
+      await performScan(result.product.productId);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to add stage");
+    }
+    setActionLoading(false);
+  };
+
+  const handleTransfer = async () => {
+    if (!user || !result) return;
+    const toOrg = NEXT_ORG_MAP[user.role];
+    if (!toOrg) { toast.error("No transfer target for your role"); return; }
+    setActionLoading(true);
+    try {
+      await transferAPI.transfer({ productId: result.product.productId, toOrg });
+      toast.success(`Transferred to ${toOrg}!`);
+      await performScan(result.product.productId);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Transfer failed");
+    }
+    setActionLoading(false);
+  };
+
+  const isSupplyChainUser = user && SUPPLY_CHAIN_ROLES.includes(user.role);
+  const isCustomer = user?.role === "customer";
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -44,22 +124,65 @@ export default function ScanPage() {
             <QrCode className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-white">Scan Product</h1>
-          <p className="text-gray-400 text-sm mt-1">Enter a product ID to view its complete journey</p>
+          <p className="text-gray-400 text-sm mt-1">Scan a QR code or enter a product ID to view its journey</p>
         </div>
 
-        <Card className="bg-gray-900/60 border-white/10 mb-6">
-          <CardContent className="p-6">
-            <form onSubmit={handleScan} className="flex gap-3">
-              <Input placeholder="PROD-XXXXXXXX" value={productId} onChange={(e) => setProductId(e.target.value)} className="flex-1 bg-gray-800/50 border-white/10 text-white placeholder:text-gray-500 text-lg" />
-              <Button type="submit" className="bg-gradient-to-r from-amber-500 to-orange-600 text-white px-6" disabled={loading}>
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+        {/* Mode Toggle */}
+        <div className="flex gap-2 mb-4 justify-center">
+          <Button
+            variant={scanMode === "qr" ? "default" : "outline"}
+            onClick={() => { setScanMode("qr"); setShowScanner(true); }}
+            className={scanMode === "qr" ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white" : "border-white/10 text-gray-400"}
+            size="sm"
+          >
+            <Camera className="mr-2 h-4 w-4" /> Scan QR Code
+          </Button>
+          <Button
+            variant={scanMode === "manual" ? "default" : "outline"}
+            onClick={() => { setScanMode("manual"); setShowScanner(false); }}
+            className={scanMode === "manual" ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white" : "border-white/10 text-gray-400"}
+            size="sm"
+          >
+            <Search className="mr-2 h-4 w-4" /> Enter ID Manually
+          </Button>
+        </div>
+
+        {/* QR Scanner */}
+        {showScanner && scanMode === "qr" && (
+          <Card className="bg-gray-900/60 border-white/10 mb-6">
+            <CardContent className="p-4">
+              <QRScanner
+                onScan={handleQRScan}
+                onError={(msg) => toast.error(msg)}
+                onClose={() => setShowScanner(false)}
+              />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Manual Input */}
+        {scanMode === "manual" && (
+          <Card className="bg-gray-900/60 border-white/10 mb-6">
+            <CardContent className="p-6">
+              <form onSubmit={handleManualScan} className="flex gap-3">
+                <Input placeholder="PROD-XXXXXXXX" value={productId} onChange={(e) => setProductId(e.target.value)} className="flex-1 bg-gray-800/50 border-white/10 text-white placeholder:text-gray-500 text-lg" />
+                <Button type="submit" className="bg-gradient-to-r from-amber-500 to-orange-600 text-white px-6" disabled={loading}>
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Loading */}
+        {loading && (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+          </div>
+        )}
 
         {/* Result */}
-        {result && (
+        {result && !loading && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Fraud Alert */}
             {result.fraudAlert && (
@@ -93,6 +216,57 @@ export default function ScanPage() {
               </CardContent>
             </Card>
 
+            {/* Supply Chain Actions */}
+            {isSupplyChainUser && (
+              <Card className="bg-gray-900/60 border-amber-500/20 border-2">
+                <CardHeader>
+                  <CardTitle className="text-amber-400 text-lg flex items-center gap-2">
+                    <Layers className="h-5 w-5" /> Supply Chain Actions
+                  </CardTitle>
+                  <p className="text-xs text-gray-500">Add lifecycle stage or transfer ownership</p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Add Lifecycle Stage */}
+                  <div className="rounded-lg border border-white/10 p-4 space-y-3">
+                    <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                      <Plus className="h-4 w-4 text-amber-400" /> Add Lifecycle Stage
+                    </h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs text-gray-400">Margin (₹)</Label>
+                        <Input type="number" min="0" placeholder="200" value={marginValue} onChange={(e) => setMarginValue(e.target.value)}
+                          className="mt-1 bg-gray-800/50 border-white/10 text-white text-sm" />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-gray-400">Location</Label>
+                        <Input placeholder="City" value={stageLocation} onChange={(e) => setStageLocation(e.target.value)}
+                          className="mt-1 bg-gray-800/50 border-white/10 text-white text-sm" />
+                      </div>
+                    </div>
+                    <Button onClick={handleAddLifecycle} disabled={actionLoading} className="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white" size="sm">
+                      {actionLoading ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : <Plus className="mr-2 h-3 w-3" />}
+                      Add {STAGE_MAP[user!.role] || "Stage"}
+                    </Button>
+                  </div>
+
+                  {/* Transfer */}
+                  <div className="rounded-lg border border-white/10 p-4">
+                    <h4 className="text-sm font-semibold text-white flex items-center gap-2 mb-3">
+                      <ArrowRightLeft className="h-4 w-4 text-purple-400" /> Transfer Ownership
+                    </h4>
+                    <p className="text-xs text-gray-400 mb-3">
+                      Transfer to: <span className="text-purple-400 font-medium">{NEXT_ORG_MAP[user!.role] || "N/A"}</span>
+                    </p>
+                    <Button onClick={handleTransfer} disabled={actionLoading} variant="outline"
+                      className="w-full border-purple-500/30 text-purple-400 hover:bg-purple-500/10" size="sm">
+                      {actionLoading ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : <ArrowRightLeft className="mr-2 h-3 w-3" />}
+                      Transfer Now
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Journey */}
             {result.journey && result.journey.length > 0 && (
               <Card className="bg-gray-900/60 border-white/10">
@@ -120,6 +294,7 @@ export default function ScanPage() {
           </div>
         )}
       </main>
+      <OfflineIndicator />
     </div>
   );
 }

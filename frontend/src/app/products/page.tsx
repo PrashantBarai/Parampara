@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { Navbar } from "@/components/navbar";
+import { CameraCapture } from "@/components/CameraCapture";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { productAPI } from "@/lib/api";
 import { Product, STATUS_COLORS } from "@/lib/types";
-import { Package, Plus, Search, Loader2, ArrowRight } from "lucide-react";
+import { Package, Plus, Search, Loader2, ArrowRight, Camera } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ProductsPage() {
@@ -24,7 +25,8 @@ export default function ProductsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [newProduct, setNewProduct] = useState({ name: "", description: "", artisanId: "", basePrice: "" });
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageBlob, setImageBlob] = useState<Blob | null>(null);
+  const [showCamera, setShowCamera] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -52,12 +54,13 @@ export default function ProductsPage() {
       formData.append("description", newProduct.description);
       formData.append("artisanId", newProduct.artisanId);
       formData.append("basePrice", newProduct.basePrice);
-      if (imageFile) formData.append("image", imageFile);
+      if (imageBlob) formData.append("image", imageBlob, "camera-capture.jpg");
       await productAPI.create(formData);
       toast.success("Product registered on blockchain!");
       setCreateOpen(false);
       setNewProduct({ name: "", description: "", artisanId: "", basePrice: "" });
-      setImageFile(null);
+      setImageBlob(null);
+      setShowCamera(false);
       fetchProducts();
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to create product");
@@ -87,7 +90,32 @@ export default function ProductsPage() {
                   <div><Label className="text-gray-300">Description</Label><Input placeholder="Describe the product" value={newProduct.description} onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })} className="mt-1 bg-gray-800/50 border-white/10 text-white" /></div>
                   <div><Label className="text-gray-300">Artisan ID</Label><Input placeholder="ART-XXXXXXXX" value={newProduct.artisanId} onChange={(e) => setNewProduct({ ...newProduct, artisanId: e.target.value })} required className="mt-1 bg-gray-800/50 border-white/10 text-white" /></div>
                   <div><Label className="text-gray-300">Base Price (₹)</Label><Input type="number" min="1" placeholder="1500" value={newProduct.basePrice} onChange={(e) => setNewProduct({ ...newProduct, basePrice: e.target.value })} required className="mt-1 bg-gray-800/50 border-white/10 text-white" /></div>
-                  <div><Label className="text-gray-300">Product Image</Label><Input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] || null)} className="mt-1 bg-gray-800/50 border-white/10 text-white file:text-gray-400" /></div>
+                  <div>
+                    <Label className="text-gray-300">Product Image</Label>
+                    {showCamera ? (
+                      <div className="mt-2">
+                        <CameraCapture
+                          onCapture={(blob) => { setImageBlob(blob); setShowCamera(false); toast.success("Photo captured!"); }}
+                          onCancel={() => setShowCamera(false)}
+                        />
+                      </div>
+                    ) : (
+                      <div className="mt-2">
+                        {imageBlob ? (
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1 rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-sm text-emerald-400">📸 Photo captured</div>
+                            <Button type="button" variant="outline" size="sm" onClick={() => setShowCamera(true)} className="border-white/10 text-gray-300">
+                              Retake
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button type="button" onClick={() => setShowCamera(true)} variant="outline" className="w-full mt-1 border-dashed border-white/20 text-gray-400 hover:bg-gray-800 hover:text-white">
+                            <Camera className="mr-2 h-4 w-4" /> Open Camera to Capture
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   <Button type="submit" className="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white" disabled={creating}>
                     {creating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Package className="mr-2 h-4 w-4" />}
                     Register on Blockchain

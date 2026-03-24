@@ -57,6 +57,7 @@ const schemas = {
     productId: Joi.string().required(),
     location: Joi.string().optional(),
     coordinates: Joi.object({ lat: Joi.number(), lng: Joi.number() }).optional(),
+    sig: Joi.string().optional(),
   }),
 
   returnInitiate: Joi.object({

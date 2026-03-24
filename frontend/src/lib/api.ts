@@ -68,7 +68,7 @@ export const orderAPI = {
 
 // ─── Scan ─────────────────────────────────────────────────
 export const scanAPI = {
-  scan: (data: { productId: string; location?: string; coordinates?: { lat: number; lng: number } }) =>
+  scan: (data: { productId: string; location?: string; coordinates?: { lat: number; lng: number }; sig?: string }) =>
     api.post("/scan", data),
 };
 
