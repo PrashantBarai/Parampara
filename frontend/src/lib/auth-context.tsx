@@ -18,27 +18,25 @@ const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const storedToken = localStorage.getItem("parampara_token");
-    const storedUser = localStorage.getItem("parampara_user");
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
-  }, []);
+  // Initialize from sessionStorage synchronously to avoid redirect race condition
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window === "undefined") return null;
+    const stored = sessionStorage.getItem("parampara_user");
+    return stored ? JSON.parse(stored) : null;
+  });
+  const [token, setToken] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return sessionStorage.getItem("parampara_token");
+  });
+  const [isLoading, setIsLoading] = useState(false); // No longer needs async init
 
   const login = async (email: string, password: string) => {
     const res = await authAPI.login({ email, password });
     const { user: userData, token: jwtToken } = res.data.data;
     setUser(userData);
     setToken(jwtToken);
-    localStorage.setItem("parampara_token", jwtToken);
-    localStorage.setItem("parampara_user", JSON.stringify(userData));
+    sessionStorage.setItem("parampara_token", jwtToken);
+    sessionStorage.setItem("parampara_user", JSON.stringify(userData));
     setIsLoading(false);
   };
 
@@ -47,8 +45,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { user: userData, token: jwtToken } = res.data.data;
     setUser(userData);
     setToken(jwtToken);
-    localStorage.setItem("parampara_token", jwtToken);
-    localStorage.setItem("parampara_user", JSON.stringify(userData));
+    sessionStorage.setItem("parampara_token", jwtToken);
+    sessionStorage.setItem("parampara_user", JSON.stringify(userData));
     setIsLoading(false);
   };
 
@@ -56,8 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setToken(null);
     setIsLoading(false);
-    localStorage.removeItem("parampara_token");
-    localStorage.removeItem("parampara_user");
+    sessionStorage.removeItem("parampara_token");
+    sessionStorage.removeItem("parampara_user");
   };
 
   return (

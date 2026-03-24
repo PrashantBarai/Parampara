@@ -4,6 +4,6 @@ const { authenticate } = require('../middlewares/auth.middleware');
 const { authorize } = require('../middlewares/role.middleware');
 const { validate, schemas } = require('../middlewares/validate.middleware');
 
-router.post('/', authenticate, authorize('warehouse', 'distributor', 'retailer'), validate(schemas.transfer), ctrl.transfer);
+router.post('/', authenticate, authorize('ngo', 'manufacturer', 'warehouse', 'distributor', 'retailer'), validate(schemas.transfer), ctrl.transfer);
 
 module.exports = router;
