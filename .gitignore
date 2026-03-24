@@ -28,6 +28,7 @@ config/
 fabric_api/wallet/
 fabric_api/logs/
 _microfab/
+vendor/
 *.id
 
 # Logs
@@ -44,5 +45,7 @@ logs/
 *.key
 *.cert
 *.crt
+*.tar.gz
+*.tgz
 
 !app_backend/src/config

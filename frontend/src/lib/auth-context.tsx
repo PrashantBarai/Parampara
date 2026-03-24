@@ -8,7 +8,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (data: { name: string; email: string; password: string; role: string; org: string; location?: string }) => Promise<void>;
+  register: (data: { name: string; email: string; password: string; role: string; org: string; location?: string; aadhaar: string }) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -39,20 +39,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(jwtToken);
     localStorage.setItem("parampara_token", jwtToken);
     localStorage.setItem("parampara_user", JSON.stringify(userData));
+    setIsLoading(false);
   };
 
-  const register = async (data: { name: string; email: string; password: string; role: string; org: string; location?: string }) => {
+  const register = async (data: { name: string; email: string; password: string; role: string; org: string; location?: string; aadhaar: string }) => {
     const res = await authAPI.register(data);
     const { user: userData, token: jwtToken } = res.data.data;
     setUser(userData);
     setToken(jwtToken);
     localStorage.setItem("parampara_token", jwtToken);
     localStorage.setItem("parampara_user", JSON.stringify(userData));
+    setIsLoading(false);
   };
 
   const logout = () => {
     setUser(null);
     setToken(null);
+    setIsLoading(false);
     localStorage.removeItem("parampara_token");
     localStorage.removeItem("parampara_user");
   };

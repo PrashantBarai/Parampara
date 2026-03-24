@@ -29,8 +29,12 @@ export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && !user) router.push("/login");
-  }, [user, isLoading]);
+    // Only redirect if definitively NOT loading and NO user exists
+    if (isLoading === false && user === null) {
+      console.log("🚫 No user found, redirecting to login...");
+      router.push("/login");
+    }
+  }, [user, isLoading, router]);
 
   if (isLoading || !user)
     return (

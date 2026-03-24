@@ -8,14 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Package, Loader2 } from "lucide-react";
+import { Package, Loader2, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { ORG_MAP, ROLE_LABELS } from "@/lib/types";
 
 const roles = ["ngo", "validator", "manufacturer", "warehouse", "distributor", "retailer", "customer"] as const;
 
 export default function RegisterPage() {
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "", location: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", role: "", location: "", aadhaar: "" });
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const router = useRouter();
@@ -23,6 +23,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.role) { toast.error("Please select a role"); return; }
+    if (!/^\d{12}$/.test(form.aadhaar)) { toast.error("Enter a valid 12-digit Aadhaar number"); return; }
     setLoading(true);
     try {
       await register({ ...form, org: ORG_MAP[form.role] });
@@ -75,6 +76,28 @@ export default function RegisterPage() {
             <div className="space-y-2">
               <Label className="text-gray-300">Location (optional)</Label>
               <Input placeholder="City, State" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} className="bg-gray-800/50 border-white/10 text-white placeholder:text-gray-500" />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-gray-300 flex items-center gap-1.5">
+                <Shield className="h-3.5 w-3.5 text-emerald-400" />
+                Aadhaar Number (KYC)
+              </Label>
+              <Input
+                placeholder="XXXX XXXX XXXX"
+                value={form.aadhaar}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, "").slice(0, 12);
+                  setForm({ ...form, aadhaar: val });
+                }}
+                inputMode="numeric"
+                maxLength={12}
+                required
+                className="bg-gray-800/50 border-white/10 text-white placeholder:text-gray-500 tracking-widest"
+              />
+              <p className="text-[11px] text-gray-500 flex items-center gap-1">
+                <Shield className="h-3 w-3 text-emerald-500/60" />
+                Encrypted with AES-256 — never stored in plaintext
+              </p>
             </div>
             <Button type="submit" className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white" disabled={loading}>
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

@@ -21,6 +21,8 @@ const schemas = {
     role: Joi.string().valid(...ROLES).required(),
     org: Joi.string().valid(...ALL_ORGS).required(),
     location: Joi.string().allow('').optional(),
+    aadhaar: Joi.string().length(12).pattern(/^\d{12}$/).required()
+      .messages({ 'string.pattern.base': 'Aadhaar must be exactly 12 digits' }),
   }),
 
   login: Joi.object({

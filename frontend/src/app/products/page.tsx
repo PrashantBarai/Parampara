@@ -14,6 +14,7 @@ import { productAPI } from "@/lib/api";
 import { Product, STATUS_COLORS } from "@/lib/types";
 import { Package, Plus, Search, Loader2, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { CameraCapture } from "@/components/camera-capture";
 
 export default function ProductsPage() {
   const { user, isLoading } = useAuth();
@@ -87,7 +88,16 @@ export default function ProductsPage() {
                   <div><Label className="text-gray-300">Description</Label><Input placeholder="Describe the product" value={newProduct.description} onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })} className="mt-1 bg-gray-800/50 border-white/10 text-white" /></div>
                   <div><Label className="text-gray-300">Artisan ID</Label><Input placeholder="ART-XXXXXXXX" value={newProduct.artisanId} onChange={(e) => setNewProduct({ ...newProduct, artisanId: e.target.value })} required className="mt-1 bg-gray-800/50 border-white/10 text-white" /></div>
                   <div><Label className="text-gray-300">Base Price (₹)</Label><Input type="number" min="1" placeholder="1500" value={newProduct.basePrice} onChange={(e) => setNewProduct({ ...newProduct, basePrice: e.target.value })} required className="mt-1 bg-gray-800/50 border-white/10 text-white" /></div>
-                  <div><Label className="text-gray-300">Product Image</Label><Input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] || null)} className="mt-1 bg-gray-800/50 border-white/10 text-white file:text-gray-400" /></div>
+                  <div>
+                    <Label className="text-gray-300">Product Photo (Live Camera Only)</Label>
+                    <div className="mt-1">
+                      <CameraCapture
+                        onCapture={(file) => setImageFile(file)}
+                        onClear={() => setImageFile(null)}
+                        captured={!!imageFile}
+                      />
+                    </div>
+                  </div>
                   <Button type="submit" className="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white" disabled={creating}>
                     {creating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Package className="mr-2 h-4 w-4" />}
                     Register on Blockchain

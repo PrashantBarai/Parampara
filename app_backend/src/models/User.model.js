@@ -9,6 +9,9 @@ const UserSchema = new mongoose.Schema({
   role: { type: String, required: true, enum: ROLES },
   org: { type: String, required: true, enum: ALL_ORGS },
   location: { type: String, default: '' },
+  aadhaarEncrypted: { type: String, default: '' },  // AES-256-CBC encrypted Aadhaar
+  aadhaarLastFour: { type: String, default: '' },   // Last 4 digits for display (e.g. XXXX-XXXX-1234)
+  kycVerified: { type: Boolean, default: false },
   isActive: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now },
 });
@@ -32,6 +35,7 @@ UserSchema.methods.comparePassword = async function (candidatePassword) {
 UserSchema.methods.toJSON = function () {
   const obj = this.toObject();
   delete obj.passwordHash;
+  delete obj.aadhaarEncrypted;  // Never expose encrypted Aadhaar in API responses
   delete obj.__v;
   return obj;
 };
