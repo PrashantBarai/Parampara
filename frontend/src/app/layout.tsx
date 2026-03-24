@@ -28,6 +28,8 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
+import Script from "next/script";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -44,19 +46,17 @@ export default function RootLayout({
           {children}
         </ClientProviders>
         {/* Service Worker Registration */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                  navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('✅ SW registered:', reg.scope))
-                    .catch(err => console.warn('SW registration failed:', err));
-                });
-              }
-            `,
-          }}
-        />
+        <Script id="sw-register" strategy="afterInteractive">
+          {`
+            if ('serviceWorker' in navigator) {
+              window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                  .then(reg => console.log('✅ SW registered:', reg.scope))
+                  .catch(err => console.warn('SW registration failed:', err));
+              });
+            }
+          `}
+        </Script>
       </body>
     </html>
   );

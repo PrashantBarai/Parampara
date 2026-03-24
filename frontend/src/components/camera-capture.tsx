@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Camera, RotateCcw, Check, X } from "lucide-react";
 
@@ -18,18 +18,22 @@ export function CameraCapture({ onCapture, onClear, captured }: CameraCapturePro
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (isStreaming && !preview && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+      videoRef.current.play().catch(console.error);
+    }
+  }, [isStreaming, preview]);
+
   const startCamera = useCallback(async () => {
     setError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: true, // Use default camera, don't force 'environment' (rear) since desktops don't have one
         audio: false,
       });
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
+      // Tell React to render the video element. The useEffect will attach the stream.
       setIsStreaming(true);
     } catch {
       setError("Camera access denied. Please allow camera permissions.");

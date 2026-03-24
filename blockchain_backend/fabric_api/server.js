@@ -29,6 +29,7 @@ app.use('/api/health', require('./routes/health.routes'));
 app.use('/api/products', authMiddleware, require('./routes/product.routes'));
 app.use('/api/artisans', authMiddleware, require('./routes/artisan.routes'));
 app.use('/api/tokens',   authMiddleware, require('./routes/token.routes'));
+app.use('/api/system',   authMiddleware, require('./routes/system.routes'));
 
 // ── Error Handler ─────────────────────────────────────────────────────
 app.use((err, req, res, next) => {

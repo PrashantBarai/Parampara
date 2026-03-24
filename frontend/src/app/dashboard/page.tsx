@@ -28,7 +28,10 @@ export default function DashboardPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
+    setMounted(true);
     // Only redirect if definitively NOT loading and NO user exists
     if (isLoading === false && user === null) {
       console.log("🚫 No user found, redirecting to login...");
@@ -36,7 +39,7 @@ export default function DashboardPage() {
     }
   }, [user, isLoading, router]);
 
-  if (isLoading || !user)
+  if (!mounted || isLoading || !user)
     return (
       <div className="flex h-screen items-center justify-center bg-gray-950">
         <Loader2 className="h-8 w-8 animate-spin text-amber-500" />

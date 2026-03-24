@@ -10,8 +10,8 @@ const SUPPLY_CHAIN_SEQUENCE = [
 
 // Valid forward transfers
 const VALID_TRANSFERS = {
-  NGOOrg: 'ManufacturerOrg',
-  ManufacturerOrg: 'WarehouseOrg',
+  ManufacturerOrg: 'NGOOrg',
+  NGOOrg: 'WarehouseOrg',
   WarehouseOrg: 'DistributorOrg',
   DistributorOrg: 'RetailerOrg',
   RetailerOrg: 'CustomerOrg',

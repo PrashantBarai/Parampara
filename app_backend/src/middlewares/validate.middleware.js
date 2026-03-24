@@ -70,11 +70,11 @@ const schemas = {
     name: Joi.string().trim().min(2).max(100).required(),
     craft: Joi.string().trim().min(2).max(200).required(),
     location: Joi.string().required(),
-    issuedBy: Joi.string().optional(),
-    issuedDate: Joi.date().optional(),
-    expiryDate: Joi.date().optional(),
-    craftType: Joi.string().optional(),
-    region: Joi.string().optional(),
+    issuedBy: Joi.string().allow('').optional(),
+    issuedDate: Joi.date().allow('').optional(),
+    expiryDate: Joi.date().allow('').optional(),
+    craftType: Joi.string().allow('').optional(),
+    region: Joi.string().allow('').optional(),
   }),
 
   artisanVerify: Joi.object({

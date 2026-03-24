@@ -41,8 +41,8 @@ export function NGODashboard() {
   const handleTransfer = async (productId: string) => {
     setTransferring(productId);
     try {
-      await transferAPI.transfer({ productId, toOrg: "ManufacturerOrg" });
-      toast.success(`Product ${productId} transferred to Manufacturer!`);
+      await transferAPI.transfer({ productId, toOrg: "WarehouseOrg" });
+      toast.success(`Product ${productId} transferred to Warehouse!`);
       fetchData();
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Transfer failed");
@@ -138,7 +138,7 @@ export function NGODashboard() {
                           className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
                         >
                           {transferring === p.productId ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3 mr-1" />}
-                          To Manufacturer
+                          To Warehouse
                         </Button>
                       )}
                     </div>
@@ -167,13 +167,13 @@ export function NGODashboard() {
             {registeredProducts.length > 0 && (
               <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 mt-2">
                 <p className="text-xs text-emerald-400 font-medium flex items-center gap-1"><Send className="h-3 w-3" /> Ready to Transfer</p>
-                <p className="text-xs text-gray-400 mt-1">{registeredProducts.length} product(s) waiting to be sent to Manufacturer</p>
+                <p className="text-xs text-gray-400 mt-1">{registeredProducts.length} product(s) waiting to be sent to Warehouse</p>
               </div>
             )}
 
             <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 mt-2">
               <p className="text-xs text-amber-400 font-medium">💡 Supply Chain Flow</p>
-              <p className="text-xs text-gray-400 mt-1">NGO → Manufacturer → Warehouse → Distributor → Retailer → Customer</p>
+              <p className="text-xs text-gray-400 mt-1">NGO (Registers for Artisan) → Warehouse → Distributor → Retailer → Customer</p>
             </div>
           </CardContent>
         </Card>
